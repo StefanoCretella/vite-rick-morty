@@ -13,42 +13,56 @@
       <button @click="resetSearch">Reset</button>
     </div>
     <CharacterList :characters="characters" />
+    <Pagination 
+      v-if="totalPages > 1" 
+      :currentPage="currentPage" 
+      :totalPages="totalPages" 
+      @updatePage="updatePage"
+    />
   </div>
 </template>
 
 <script>
 import Header from './components/Header.vue';
 import CharacterList from './components/CharacterList.vue';
+import Pagination from './components/Pagination.vue';
 
 export default {
-  components: { Header, CharacterList },
+  components: { Header, CharacterList, Pagination },
   data() {
     return {
       characters: [],
       searchName: '',
-      searchStatus: ''
+      searchStatus: '',
+      currentPage: 1,
+      totalPages: 1  // Assicurati che totalPages sia definito qui
     };
   },
   async created() {
     this.fetchCharacters();
   },
   methods: {
-    async fetchCharacters() {
-      const response = await fetch('https://rickandmortyapi.com/api/character');
-      const data = await response.json();
-      this.characters = data.results;
-    },
-    async searchCharacters() {
+    async fetchCharacters(page = 1) {
       const nameQuery = this.searchName ? `&name=${this.searchName}` : '';
       const statusQuery = this.searchStatus ? `&status=${this.searchStatus}` : '';
-      const response = await fetch(`https://rickandmortyapi.com/api/character?${nameQuery}${statusQuery}`);
+      const response = await fetch(`https://rickandmortyapi.com/api/character?page=${page}${nameQuery}${statusQuery}`);
       const data = await response.json();
       this.characters = data.results;
+      this.totalPages = data.info.pages;
+    },
+    searchCharacters() {
+      this.currentPage = 1;
+      this.fetchCharacters();
     },
     resetSearch() {
       this.searchName = '';
       this.searchStatus = '';
+      this.currentPage = 1;
       this.fetchCharacters();
+    },
+    updatePage(page) {
+      this.currentPage = page;
+      this.fetchCharacters(page);
     }
   }
 }
